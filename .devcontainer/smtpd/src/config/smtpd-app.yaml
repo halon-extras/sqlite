@@ -1,0 +1,48 @@
+version: "5.10"
+servers:
+  - id: default
+    phases:
+      eod:
+        hook: default
+    transport: mx
+transportgroups:
+  - id: default
+    retry:
+      count: 30
+      intervals:
+        - interval: 60
+        - interval: 900
+        - interval: 3600
+          notify: true
+        - interval: 7200
+        - interval: 10800
+    dsn:
+      transport: mx
+    transports:
+      - id: mx
+        session:
+          tls:
+            mode: dane
+resolver:
+  cache:
+    size: 10000
+plugins:
+  - id: sqlite
+    config:
+      default_profile: readwrite
+      profiles:
+        - id: readwrite
+          filename: /tmp/database.db
+          pool_size: 32
+          foreign_keys: false
+          readonly: false
+        - id: readonly
+          filename: /tmp/database.db
+          pool_size: 32
+          foreign_keys: false
+          readonly: true
+        - id: foreignkeys
+          filename: /tmp/database.db
+          pool_size: 32
+          foreign_keys: true
+          readonly: false

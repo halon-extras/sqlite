@@ -1,0 +1,43 @@
+[
+    {
+        "name": "SQLite",
+        "instantiable": true,
+        "parameters": {
+            "required": [],
+            "optional": [
+                {
+                    "name": "profile",
+                    "type": "string"
+                }
+            ]
+        },
+        "methods": [
+            {
+                "name": "query",
+                "parameters": {
+                    "required": [
+                        {
+                            "name": "query",
+                            "type": "string"
+                        }
+                    ],
+                    "optional": [
+                        {
+                            "name": "params",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "returnType": "array",
+                "detail": "SQLite->query(string $query [, array $params]): array",
+                "value": "query($0)",
+                "documentation": "Pass a \"prepared\" statement to SQLite. On error an exception is thrown.",
+                "link": "[Full documentation](https://github.com/halon-extras/sqlite)"
+            }
+        ],
+        "detail": "SQlite([string $profile])",
+        "value": "SQlite($0)",
+        "documentation": "The SQLite class is a [sqlite3](https://sqlite.org/cintro.html) wrapper class. On error an exception is thrown.",
+        "link": "[Full documentation](https://github.com/halon-extras/sqlite)"
+    }
+]

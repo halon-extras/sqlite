@@ -1,0 +1,99 @@
+import { SQLite } from "extras://sqlite";
+
+// Test 1 (TEXT STRICT)
+$expect = [0 => ["column1" => "This is a string"]];
+$sqlite = SQLite("readwrite");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test1 (column1 TEXT) STRICT");
+$sqlite->query("INSERT INTO test1 (column1) VALUES (?)", ["This is a string"]);
+$result = $sqlite->query("SELECT column1 FROM test1");
+$sqlite->query("DROP TABLE test1");
+if (json_encode($result) !== json_encode($expect))
+    throw Exception("Test 1 (TEXT STRICT): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 1 (TEXT STRICT):\t\tOK";
+
+// Test 2 (INTEGER STRICT)
+$expect = [0 => ["column1" => "25"]];
+$sqlite = SQLite("readwrite");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test2 (column1 INTEGER) STRICT");
+$sqlite->query("INSERT INTO test2 (column1) VALUES (?)", [25]);
+$result = $sqlite->query("SELECT column1 FROM test2");
+$sqlite->query("DROP TABLE test2");
+if (json_encode($result) !== json_encode($expect))
+    throw Exception("Test 2 (INTEGER STRICT): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 2 (INTEGER STRICT):\tOK";
+
+// Test 3 (REAL STRICT)
+$expect = [0 => ["column1" => 10.5]];
+$sqlite = SQLite("readwrite");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test3 (column1 REAL) STRICT");
+$sqlite->query("INSERT INTO test3 (column1) VALUES (?)", [10.5]);
+$result = $sqlite->query("SELECT column1 FROM test3");
+$sqlite->query("DROP TABLE test3");
+if (json_encode($result) !== json_encode($expect))
+    throw Exception("Test 3 (REAL STRICT): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 3 (REAL STRICT):\t\tOK";
+
+// Test 4 (BOOLEAN STRICT)
+$expect = [0 => ["column1" => "1"]];
+$sqlite = SQLite("readwrite");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test4 (column1 INTEGER CHECK (column1 IN (0,1))) STRICT");
+$sqlite->query("INSERT INTO test4 (column1) VALUES (?)", [true]);
+$result = $sqlite->query("SELECT column1 FROM test4");
+$sqlite->query("DROP TABLE test4");
+if (json_encode($result) !== json_encode($expect))
+    throw Exception("Test 4 (BOOLEAN STRICT): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 4 (BOOLEAN STRICT):\tOK";
+
+// Test 5 (BLOB STRICT)
+$bytes = random_bytes(1024);
+$expect = sha2($bytes, 256);
+$sqlite = SQLite("readwrite");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test5 (column1 BLOB) STRICT");
+$sqlite->query("INSERT INTO test5 (column1) VALUES (?)", [$bytes]);
+$result = $sqlite->query("SELECT column1 FROM test5");
+$sqlite->query("DROP TABLE test5");
+$result = sha2($result[0]["column1"], 256);
+if ($result !== $expect)
+    throw Exception("Test 5 (BLOB STRICT): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 5 (BLOB STRICT):\t\tOK";
+
+// Test 5 (NULL STRICT)
+$expect = [0 => ["column1" => none]];
+$sqlite = SQLite("readwrite");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test5 (column1 TEXT) STRICT");
+$sqlite->query("INSERT INTO test5 (column1) VALUES (?)", [none]);
+$result = $sqlite->query("SELECT column1 FROM test5");
+$sqlite->query("DROP TABLE test5");
+if (json_encode($result) !== json_encode($expect))
+    throw Exception("Test 5 (NULL STRICT): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 5 (NULL STRICT):\t\tOK";
+
+// Test 6 (READONLY)
+$expect = "attempt to write a readonly database";
+$result = "";
+try {
+    $sqlite = SQLite("readonly");
+    $sqlite->query("CREATE TABLE test6 (column1 TEXT) STRICT");
+} catch ($err) {
+    $result = $err->message();
+}
+if ($result !== $expect)
+    throw Exception("Test 6 (READONLY): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 6 (READONLY):\t\tOK";
+
+// Test 7 (FOREIGN KEYS)
+$expect = "FOREIGN KEY constraint failed";
+$result = "";
+$sqlite = SQLite("foreignkeys");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test7t1(id INTEGER PRIMARY KEY);");
+$sqlite->query("CREATE TABLE IF NOT EXISTS test7t2(id INTEGER, parentid INTEGER, FOREIGN KEY(parentid) REFERENCES test7t1(id));");
+try {
+    $sqlite->query("INSERT INTO test7t2 VALUES(1, 3);");
+} catch ($err) {
+    $result = $err->message();
+}
+$sqlite->query("DROP TABLE test7t1");
+$sqlite->query("DROP TABLE test7t2");
+if ($result !== $expect)
+    throw Exception("Test 7 (FOREIGN): FAILED\nRESULT($result)\nEXPECT($expect)");
+echo "Test 7 (FOREIGN KEYS):\t\tOK";

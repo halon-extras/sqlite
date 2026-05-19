@@ -29,8 +29,9 @@ std::shared_ptr<SQLiteConnection> get_connection(SQLite* ptr)
 			flags = SQLITE_OPEN_READONLY;
 		if (sqlite3_open_v2(ptr->profile->filename.c_str(), &db, flags, nullptr) != SQLITE_OK)
 		{
+			std::string msg = db ? sqlite3_errmsg(db) : "sqlite3_open_v2 failed";
 			sqlite3_close(db);
-			throw std::runtime_error(sqlite3_errmsg(db));
+			throw std::runtime_error(msg);
 		}
 
 		if (ptr->profile->busy_timeout != 0)

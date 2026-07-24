@@ -3,6 +3,6 @@
 ```
 export HALON_REPO_USER=exampleuser
 export HALON_REPO_PASS=examplepass
-docker compose -p halon-extras-sqlite up --build
+docker compose -p halon-extras-sqlite --profile all up --build
 docker compose -p halon-extras-sqlite down --rmi local
 ```

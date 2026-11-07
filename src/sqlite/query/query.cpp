@@ -3,6 +3,8 @@
 #include "argument.hpp"
 #include "utils.hpp"
 #include <string>
+#include <set>
+#include <vector>
 #include <stdexcept>
 #include <variant>
 #include <climits>
@@ -90,6 +92,36 @@ sqlite3_stmt* exec_prepared(SQLite* ptr, std::shared_ptr<SQLiteConnection>& conn
 	return stmt;
 }
 
+// Make column names unique so no value is shadowed in the HSL result array.
+// Repeated names get an occurrence suffix ("a", "a_2", ...)
+// that never collides with a name present in the result.
+std::vector<std::string> get_column_names(sqlite3_stmt* stmt)
+{
+	std::vector<std::string> names;
+	for (int c = 0; c < sqlite3_column_count(stmt); ++c)
+	{
+		const char* name = sqlite3_column_name(stmt, c);
+		names.emplace_back(name ? name : "");
+	}
+
+	const std::set<std::string> originals(names.begin(), names.end());
+	std::set<std::string> used;
+	for (std::string& name : names)
+	{
+		if (used.count(name))
+		{
+			std::string candidate;
+			size_t n = 2;
+			do
+				candidate = name + "_" + std::to_string(n++);
+			while (used.count(candidate) || originals.count(candidate));
+			name = candidate;
+		}
+		used.insert(name);
+	}
+	return names;
+}
+
 void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* ret)
 {
 	SQLite* ptr = (SQLite*)HalonMTA_hsl_object_ptr_get(hhc);
@@ -140,7 +172,8 @@ void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* 
 	// Set HSL response
 	HalonMTA_hsl_value_set(ret, HALONMTA_HSL_TYPE_ARRAY, nullptr, 0);
 	int idx = 0;
-	int column_count = sqlite3_column_count(stmt);
+	const std::vector<std::string> column_names = get_column_names(stmt);
+	int column_count = static_cast<int>(column_names.size());
 	while (true)
 	{
 		int rc = sqlite3_step(stmt);
@@ -155,7 +188,7 @@ void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* 
 
 			for (int c = 0; c < column_count; ++c)
 			{
-				const char* column_name = sqlite3_column_name(stmt, c);
+				const char* column_name = column_names[c].c_str();
 				int column_type = sqlite3_column_type(stmt, c);
 
 				HalonHSLValue *k2, *v2;

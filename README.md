@@ -49,6 +49,8 @@ The SQLite class is a [sqlite3](https://sqlite.org/cintro.html) wrapper class. O
 
 Pass a "prepared" statement to SQLite. On error an exception is thrown. See the table below for the data types mapping.
 
+If a result has more than one column with the same name, the repeats get a suffix (`_2`, `_3`, ...) so that every value can be read, e.g. `SELECT 1 AS a, 2 AS a` returns `["a"=>"1","a_2"=>"2"]`.
+
 | SQLite           | HSL      |
 |------------------|----------|
 | `SQLITE_TEXT`    | `string` |

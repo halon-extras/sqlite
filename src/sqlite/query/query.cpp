@@ -237,6 +237,8 @@ void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* 
 		}
 		else
 		{
+			std::string err = sqlite3_errmsg(connection->db);
+
 			sqlite3_finalize(stmt);
 
 			// Put the connection back into the pool
@@ -246,7 +248,7 @@ void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* 
 			ptr->profile->cv.notify_one();
 
 			HalonHSLValue* e = HalonMTA_hsl_throw(hhc);
-			HalonMTA_hsl_value_set(e, HALONMTA_HSL_TYPE_EXCEPTION, sqlite3_errmsg(connection->db), 0);
+			HalonMTA_hsl_value_set(e, HALONMTA_HSL_TYPE_EXCEPTION, err.c_str(), 0);
 			return;
 		}
 

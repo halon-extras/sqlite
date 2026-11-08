@@ -199,8 +199,10 @@ void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* 
 				{
 					case SQLITE_TEXT:
 					{
-						const unsigned char* value = sqlite3_column_text(stmt, c);
-						HalonMTA_hsl_value_set(v2, HALONMTA_HSL_TYPE_STRING, value, 0);
+						const unsigned char* text = sqlite3_column_text(stmt, c);
+						int bytes = sqlite3_column_bytes(stmt, c);
+						const char* value = text ? reinterpret_cast<const char*>(text) : "";
+						HalonMTA_hsl_value_set(v2, HALONMTA_HSL_TYPE_STRING, value, bytes);
 						break;
 					}
 					case SQLITE_INTEGER:
@@ -219,7 +221,7 @@ void SQLite_query(HalonHSLContext* hhc, HalonHSLArguments* args, HalonHSLValue* 
 					{
 						const void* blob = sqlite3_column_blob(stmt, c);
 						int bytes = sqlite3_column_bytes(stmt, c);
-						const char* value = static_cast<const char*>(blob);
+						const char* value = blob ? static_cast<const char*>(blob) : "";
 						HalonMTA_hsl_value_set(v2, HALONMTA_HSL_TYPE_STRING, value, bytes);
 						break;
 					}
